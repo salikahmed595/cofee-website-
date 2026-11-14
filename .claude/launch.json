@@ -1,0 +1,7 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "salikbuilds", "runtimeExecutable": "python", "runtimeArgs": ["-m", "http.server", "5173"], "port": 5173 },
+    { "name": "neurobrew-dev", "runtimeExecutable": "npx", "runtimeArgs": ["vite", "neurobrew", "--port", "5174", "--strictPort"], "port": 5174 }
+  ]
+}

@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SalikBuilds — Small-Batch Coffee, Roasted in California</title>
+  <meta name="description" content="SalikBuilds is a small-batch coffee roastery and café in California. Single-origin beans, slow-roasted, poured with intention." />
+  <meta name="theme-color" content="#0c0806" />
+  <meta property="og:title" content="SalikBuilds — Coffee, Roasted in California" />
+  <meta property="og:description" content="Single-origin, small-batch coffee. Slow-roasted in California." />
+  <meta property="og:type" content="website" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cellipse cx='32' cy='32' rx='20' ry='28' fill='%233a2214'/%3E%3Cpath d='M32 6c-8 12 8 40 0 52' stroke='%23c9a063' stroke-width='4' fill='none'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css?v=4" />
+  <script>document.documentElement.classList.add('js');</script>
+</head>
+<body class="is-loading">
+  <a class="skip" href="#main">Skip to content</a>
+
+  <!-- Preloader -->
+  <div class="loader" id="loader" aria-hidden="true">
+    <div class="loader__mark">
+      <svg viewBox="0 0 64 64" width="44" height="44"><ellipse cx="32" cy="32" rx="18" ry="26" fill="none" stroke="currentColor" stroke-width="2"/><path d="M32 7c-9 13 9 37 0 50" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+    </div>
+    <div class="loader__count"><span id="loaderNum">0</span><small>%</small></div>
+    <div class="loader__label">Roasting your experience</div>
+    <div class="loader__bar"><i id="loaderBar"></i></div>
+  </div>
+
+  <!-- 3D stage -->
+  <div class="stage" aria-hidden="true">
+    <div class="stage__glow"></div>
+    <canvas id="gl"></canvas>
+  </div>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="cursor" aria-hidden="true"><i class="cursor__dot"></i><i class="cursor__ring"><span class="cursor__label"></span></i></div>
+
+  <!-- Nav -->
+  <header class="nav" id="nav">
+    <a href="#top" class="brand" aria-label="SalikBuilds home">
+      <svg viewBox="0 0 64 64" width="26" height="26" aria-hidden="true"><ellipse cx="32" cy="32" rx="18" ry="26" fill="currentColor"/><path d="M32 7c-9 13 9 37 0 50" stroke="#0c0806" stroke-width="3.5" fill="none"/></svg>
+      <span>Salik<em>Builds</em></span>
+    </a>
+    <nav class="nav__links" aria-label="Primary">
+      <a href="#origin">Origin</a>
+      <a href="#craft">Craft</a>
+      <a href="#menu">Menu</a>
+      <a href="#build">Build</a>
+      <a href="#visit">Visit</a>
+    </nav>
+    <div class="nav__actions">
+      <button class="cart" id="cartBtn" aria-label="Your order, 0 items"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 8h14l-1.2 11.1a2 2 0 0 1-2 1.9H8.2a2 2 0 0 1-2-1.9L5 8Zm3 0V7a4 4 0 0 1 8 0v1" fill="none" stroke="currentColor" stroke-width="1.6"/></svg><span id="cartCount">0</span></button>
+      <a href="#build" class="btn btn--gold btn--sm magnetic">Order now</a>
+      <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false" aria-controls="mobileNav"><i></i><i></i></button>
+    </div>
+  </header>
+  <div class="mobile-nav" id="mobileNav" hidden>
+    <a href="#origin">Origin</a><a href="#craft">Craft</a><a href="#menu">Menu</a><a href="#build">Build your cup</a><a href="#visit">Visit us</a>
+  </div>
+
+  <!-- Side progress -->
+  <div class="progress" aria-hidden="true">
+    <span class="progress__num" id="secNum">01</span>
+    <span class="progress__track"><i id="progressBar"></i></span>
+    <span class="progress__num progress__num--dim">06</span>
+  </div>
+
+  <main id="main">
+    <!-- 01 HERO -->
+    <section class="sec hero" id="top" data-scene="hero" data-index="01">
+      <div class="wrap hero__grid">
+        <div class="hero__copy">
+          <p class="eyebrow hero-in"><span class="dot"></span>Small-batch roastery · California</p>
+          <h1 class="display" data-split="hero">Your daily ritual, <em>slow&#8209;roasted.</em></h1>
+          <p class="lede hero-in">Single-origin beans, roasted in tiny batches and poured with intention — from our roaster to your cup, under the California sun.</p>
+          <div class="hero__cta hero-in">
+            <a href="#build" class="btn btn--gold magnetic">Build your cup <span aria-hidden="true">→</span></a>
+            <a href="#menu" class="btn btn--ghost magnetic">Explore the menu</a>
+          </div>
+        </div>
+      </div>
+      <div class="wrap hero__foot hero-in">
+        <div class="hero__meta"><b>4.9</b><span>Average rating<br/>(placeholder)</span></div>
+        <div class="hero__meta"><b>72h</b><span>Max time from<br/>roast to shelf</span></div>
+        <a href="#origin" class="scroll-cue" aria-label="Scroll to discover"><span>Scroll</span><i></i></a>
+      </div>
+    </section>
+
+    <!-- Marquee -->
+    <div class="marquee" aria-hidden="true">
+      <div class="marquee__track">
+        <span>Single origin</span><b>✦</b><span>Small batch</span><b>✦</b><span>Roasted in California</span><b>✦</b><span>Ethically sourced</span><b>✦</b><span>Poured slow</span><b>✦</b>
+        <span>Single origin</span><b>✦</b><span>Small batch</span><b>✦</b><span>Roasted in California</span><b>✦</b><span>Ethically sourced</span><b>✦</b><span>Poured slow</span><b>✦</b>
+      </div>
+    </div>
+
+    <!-- 02 ORIGIN -->
+    <section class="sec origin" id="origin" data-scene="origin" data-index="02">
+      <div class="wrap split split--right">
+        <div class="copy">
+          <p class="eyebrow">02 — Origin</p>
+          <h2 class="h2" data-split>Every bean has a <em>birthplace.</em></h2>
+          <p class="body" data-reveal>We buy directly from high-altitude farms in Ethiopia, Colombia and Guatemala, paying above fair-trade so growers can invest in the next harvest. Then we roast in small batches in California, where every profile is dialed in by hand.</p>
+          <div class="stats" data-reveal>
+            <div class="stat"><b data-count="12">0</b><span>Partner farms</span></div>
+            <div class="stat"><b data-count="1900" data-suffix="m">0</b><span>Avg. altitude</span></div>
+            <div class="stat"><b data-count="86" data-suffix="+">0</b><span>Cup score</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 03 CRAFT -->
+    <section class="sec craft" id="craft" data-scene="craft" data-index="03">
+      <div class="wrap split">
+        <div class="copy">
+          <p class="eyebrow">03 — The craft</p>
+          <h2 class="h2" data-split>Patience you can <em>taste.</em></h2>
+          <ol class="steps" id="steps">
+            <li class="step is-active"><span class="step__n">01</span><div><h3>Roast</h3><p>Small batches, profiled by hand to bring out each origin's natural sweetness.</p></div></li>
+            <li class="step"><span class="step__n">02</span><div><h3>Rest</h3><p>Beans rest so gases settle and flavour opens up before they're ground.</p></div></li>
+            <li class="step"><span class="step__n">03</span><div><h3>Pour</h3><p>Precise grind, measured water, steamed milk textured to velvet for every pour.</p></div></li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- 04 MENU -->
+    <section class="sec menu" id="menu" data-scene="menu" data-index="04">
+      <div class="wrap">
+        <div class="menu__head">
+          <div>
+            <p class="eyebrow eyebrow--dark">04 — The menu</p>
+            <h2 class="h2" data-split>Poured for <em>every mood.</em></h2>
+          </div>
+          <div class="menu__nav">
+            <button class="round" id="menuPrev" aria-label="Previous drinks">←</button>
+            <button class="round" id="menuNext" aria-label="Next drinks">→</button>
+          </div>
+        </div>
+      </div>
+      <div class="rail" id="rail" tabindex="0" aria-label="Drinks menu, scroll horizontally">
+        <!-- Cards are rendered from data in main.js -->
+      </div>
+      <p class="wrap note">Prices shown are placeholders.</p>
+    </section>
+
+    <!-- 05 BUILD -->
+    <section class="sec build" id="build" data-scene="build" data-index="05">
+      <div class="wrap build__head">
+        <p class="eyebrow">05 — Build your cup</p>
+        <h2 class="h2" data-split>Make it <em>yours.</em></h2>
+      </div>
+      <form class="wrap build__grid" id="builder" novalidate>
+        <div class="panel glass" data-reveal>
+          <fieldset class="field">
+            <legend>Roast</legend>
+            <div class="seg" role="radiogroup">
+              <label><input type="radio" name="roast" value="light" /><span>Light</span></label>
+              <label><input type="radio" name="roast" value="medium" checked /><span>Medium</span></label>
+              <label><input type="radio" name="roast" value="dark" /><span>Dark</span></label>
+            </div>
+          </fieldset>
+          <fieldset class="field">
+            <legend>Milk</legend>
+            <div class="seg seg--4">
+              <label><input type="radio" name="milk" value="none" /><span>Black</span></label>
+              <label><input type="radio" name="milk" value="whole" checked /><span>Whole</span></label>
+              <label><input type="radio" name="milk" value="oat" /><span>Oat</span></label>
+              <label><input type="radio" name="milk" value="almond" /><span>Almond</span></label>
+            </div>
+          </fieldset>
+          <div class="field">
+            <label for="sweet" class="field__row"><span>Sweetness</span><output id="sweetOut">30%</output></label>
+            <input type="range" id="sweet" name="sweet" min="0" max="100" step="5" value="30" />
+          </div>
+        </div>
+
+        <div class="build__spacer" aria-hidden="true"></div>
+
+        <div class="panel glass" data-reveal>
+          <fieldset class="field">
+            <legend>Size</legend>
+            <div class="seg">
+              <label><input type="radio" name="size" value="8" /><span>8 oz</span></label>
+              <label><input type="radio" name="size" value="12" checked /><span>12 oz</span></label>
+              <label><input type="radio" name="size" value="16" /><span>16 oz</span></label>
+            </div>
+          </fieldset>
+          <fieldset class="field">
+            <legend>Temperature</legend>
+            <div class="seg seg--2">
+              <label><input type="radio" name="temp" value="hot" checked /><span>Hot</span></label>
+              <label><input type="radio" name="temp" value="iced" /><span>Iced</span></label>
+            </div>
+          </fieldset>
+          <div class="field">
+            <span class="field__row" id="shotsLabel"><span>Espresso shots</span></span>
+            <div class="stepper" role="group" aria-labelledby="shotsLabel">
+              <button type="button" id="shotMinus" aria-label="Fewer shots">−</button>
+              <output id="shots" aria-live="polite">1</output>
+              <button type="button" id="shotPlus" aria-label="More shots">+</button>
+            </div>
+          </div>
+          <div class="summary">
+            <p id="summary" aria-live="polite">12 oz · Medium roast · Whole milk · 1 shot · Hot</p>
+            <div class="summary__row">
+              <b id="price">$5.25</b>
+              <button type="submit" class="btn btn--gold magnetic">Add to order</button>
+            </div>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <!-- 06 VISIT -->
+    <section class="sec visit" id="visit" data-scene="visit" data-index="06">
+      <div class="wrap">
+        <div class="visit__head">
+          <p class="eyebrow">06 — Visit us</p>
+          <h2 class="h2" data-split>Brewed under the <em>California sun.</em></h2>
+        </div>
+        <div class="places">
+          <article class="place glass" data-reveal>
+            <span class="place__tag">Flagship</span>
+            <h3>Los Angeles</h3>
+            <p>Arts District</p>
+            <dl><dt>Mon–Fri</dt><dd>6:30 – 18:00</dd><dt>Sat–Sun</dt><dd>7:30 – 17:00</dd></dl>
+          </article>
+          <article class="place glass" data-reveal>
+            <span class="place__tag">Roastery</span>
+            <h3>San Francisco</h3>
+            <p>Hayes Valley</p>
+            <dl><dt>Mon–Fri</dt><dd>7:00 – 17:00</dd><dt>Sat–Sun</dt><dd>8:00 – 16:00</dd></dl>
+          </article>
+          <article class="place glass" data-reveal>
+            <span class="place__tag">Coastal</span>
+            <h3>San Diego</h3>
+            <p>Little Italy</p>
+            <dl><dt>Mon–Fri</dt><dd>6:30 – 17:30</dd><dt>Sat–Sun</dt><dd>7:00 – 17:00</dd></dl>
+          </article>
+        </div>
+        <p class="note note--light">Locations and hours are placeholders — replace with your real addresses.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer__top">
+      <div>
+        <h2 class="h2">Fresh roasts, <em>first.</em></h2>
+        <p class="body">New single-origins, café openings and members-only drops. No spam.</p>
+      </div>
+      <form class="news" id="news" novalidate>
+        <label for="email" class="sr-only">Email address</label>
+        <input id="email" type="email" name="email" placeholder="you@email.com" autocomplete="email" required maxlength="254" />
+        <button class="btn btn--gold" type="submit">Join the list</button>
+        <p class="news__msg" id="newsMsg" role="status"></p>
+      </form>
+    </div>
+    <div class="wrap footer__word" aria-hidden="true">Salik<em>Builds</em></div>
+    <div class="wrap footer__bar">
+      <span>© 2026 SalikBuilds Coffee · California</span>
+      <span class="footer__links"><a href="#">Instagram</a><a href="#">TikTok</a><a href="#">Wholesale</a><a href="#">Careers</a></span>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" integrity="sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" integrity="sha384-g4NTh/Iv5PPU4xPyhEWqPcwtNXOvdaDI8LLnyYfyNZOjKJeYQyjzQ9X5275eBjpt" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" integrity="sha384-Z3REaz79l2IaAZqJsSABtTbhjgOUYyV3p90XNnAPCSHg3EMTz1fouunq9WZRtj3d" crossorigin="anonymous"></script>
+  <script src="js/cup.js?v=4"></script>
+  <script src="js/scene.js?v=4"></script>
+  <script src="js/main.js?v=4"></script>
+</body>
+</html>

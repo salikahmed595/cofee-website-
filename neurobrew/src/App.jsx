@@ -1,21 +1,38 @@
-import { lazy, Suspense, useEffect, useRef, useState, useCallback } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState, useCallback, useReducer } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { journey, detectQuality } from './lib/store.js';
 import { STAGES, LAST, stageOf, hudQ, hudValues, progressFromScroll } from './lib/journey.js';
 import { Logo, StageIcon, Bag, Arrow, Mouse } from './ui/Icons.jsx';
+import { productById } from './shared/catalog.js';
+import { cartReducer, cartCount, loadCart, saveCart, CART_KEY } from './shop/cart.js';
+import Shop from './shop/Shop.jsx';
+import ProductModal from './shop/ProductModal.jsx';
+import CartDrawer from './shop/CartDrawer.jsx';
+import Checkout from './shop/Checkout.jsx';
+import TrackOrder from './shop/TrackOrder.jsx';
 
 gsap.registerPlugin(ScrollTrigger);
 if (import.meta.env.DEV) { window.__gsap = gsap; window.__ST = ScrollTrigger; } // dev-only test hooks
-const Experience = lazy(() => import('./three/Experience.jsx'));
+// After a new deploy, an old tab may ask for chunk files that no longer exist. Reload once to pick up the new build.
+const lazyWithReload = (load) => lazy(() => load().catch((err) => {
+  let reloaded = false;
+  try { reloaded = sessionStorage.getItem('nb-chunk-reload') === '1'; sessionStorage.setItem('nb-chunk-reload', '1'); } catch { /* storage blocked */ }
+  if (!reloaded) { window.location.reload(); return new Promise(() => {}); }
+  throw err;
+}));
+const Experience = lazyWithReload(() => import('./three/Experience.jsx'));
+const Admin = lazyWithReload(() => import('./shop/Admin.jsx'));
 
-/* Placeholder catalogue — replace prices and products before launch. */
-const PRODUCTS = [
-  { id: 'origin', name: 'Origin Blend', notes: 'Cocoa · stone fruit · caramel', price: 2400, tag: 'Signature' },
-  { id: 'midnight', name: 'Midnight Roast', notes: 'Dark chocolate · molasses · smoke', price: 2600, tag: 'Bold' },
-  { id: 'velvet', name: 'Velvet Decaf', notes: 'Honey · almond · soft citrus', price: 2200, tag: 'Swiss water' },
-];
-const money = (c) => '$' + (c / 100).toFixed(2);
+const ROUTES = ['checkout', 'track', 'admin', 'confirmation'];
+const readRoute = () => { const h = window.location.hash.slice(1); return ROUTES.includes(h) ? h : ''; };
+function readStripeReturn() {
+  const u = new URLSearchParams(window.location.search);
+  const order = u.get('order') || '', session = u.get('session_id') || '';
+  return /^NB-[A-Z0-9]{8}$/.test(order) && /^cs_[A-Za-z0-9_]{6,200}$/.test(session) ? { order, session } : null;
+}
+const safeStorage = () => { try { return window.localStorage; } catch { return { getItem: () => null, setItem: () => {} }; } };
+
 
 function sectionHeight() {
   const el = document.querySelector('.stage');
@@ -29,7 +46,11 @@ export default function App() {
   const [quality, setQuality] = useState(() => detectQuality());
   const [ready, setReady] = useState(quality === 'none');
   const [stage, setStage] = useState(0);
-  const [cart, setCart] = useState(0);
+  const [cart, dispatch] = useReducer(cartReducer, undefined, () => loadCart(safeStorage()));
+  const [route, setRoute] = useState(readRoute);
+  const [stripeReturn, setStripeReturn] = useState(readStripeReturn);
+  const [product, setProduct] = useState(null);
+  const [cartOpen, setCartOpen] = useState(false);
   const [toast, setToast] = useState('');
   const toastTimer = useRef();
   const railRef = useRef();
@@ -39,7 +60,35 @@ export default function App() {
     clearTimeout(toastTimer.current);
     toastTimer.current = setTimeout(() => setToast(''), 2600);
   }, []);
-  const addToCart = useCallback((name) => { setCart((c) => c + 1); notify(`Added to cart — ${name}`); }, [notify]);
+  const addToCart = useCallback((line) => {
+    dispatch({ type: 'add', line });
+    notify(`Added to cart — ${productById(line.id)?.name || 'item'}`);
+  }, [notify]);
+  const count = cartCount(cart);
+
+  // cart persistence + sync between tabs
+  useEffect(() => { saveCart(safeStorage(), cart); }, [cart]);
+  useEffect(() => {
+    const on = (e) => { if (e.key === CART_KEY) { dispatch({ type: 'clear' }); loadCart(safeStorage()).forEach((line) => dispatch({ type: 'add', line })); } };
+    window.addEventListener('storage', on);
+    return () => window.removeEventListener('storage', on);
+  }, []);
+
+  // hash routes for overlays (#checkout, #track, #admin) so links and the back button work
+  useEffect(() => {
+    const on = () => setRoute(readRoute());
+    window.addEventListener('hashchange', on);
+    return () => window.removeEventListener('hashchange', on);
+  }, []);
+  useEffect(() => { if (stripeReturn && route !== 'confirmation') { window.history.replaceState(null, '', window.location.pathname + window.location.search + '#confirmation'); setRoute('confirmation'); } }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const openRoute = useCallback((r) => { setCartOpen(false); if (window.location.hash !== '#' + r) window.location.hash = r; else setRoute(r); }, []);
+  const closeRoute = useCallback(() => {
+    window.history.replaceState(null, '', window.location.pathname + (stripeReturn ? '' : window.location.search));
+    setStripeReturn(null);
+    setRoute('');
+  }, [stripeReturn]);
+  const orderDone = useCallback(() => { dispatch({ type: 'clear' }); }, []);
+  const toShop = useCallback(() => document.getElementById('shop')?.scrollIntoView({ behavior: journey.reduced ? 'auto' : 'smooth' }), []);
 
   // Safety net: never leave the loader up if WebGL is slow to start.
   useEffect(() => { const id = setTimeout(() => setReady(true), 6000); return () => clearTimeout(id); }, []);
@@ -51,6 +100,13 @@ export default function App() {
     let H = sectionHeight();
     const update = () => { journey.p = progressFromScroll(window.scrollY, H); };
     const st = ScrollTrigger.create({ trigger: '#journey', start: 'top top', end: 'bottom bottom', onUpdate: update, onRefresh: () => { H = sectionHeight(); update(); } });
+    // Hide the journey rail + HUD once the visitor is in the store.
+    const journeyEl = document.getElementById('journey');
+    const checkPast = () => document.documentElement.classList.toggle('past-journey', window.scrollY > journeyEl.offsetHeight - window.innerHeight * 0.55);
+    window.addEventListener('scroll', checkPast, { passive: true });
+    window.addEventListener('resize', checkPast);
+    checkPast();
+    const past = { kill: () => { window.removeEventListener('scroll', checkPast); window.removeEventListener('resize', checkPast); } };
     update();
     journey.smooth = journey.p;
 
@@ -74,7 +130,7 @@ export default function App() {
       }
     };
     gsap.ticker.add(tick);
-    return () => { st.kill(); gsap.ticker.remove(tick); };
+    return () => { st.kill(); past.kill(); gsap.ticker.remove(tick); };
   }, []);
 
   // Copy reveal per stage (ScrollTrigger toggles; CSS does the motion so reduced-motion is respected).
@@ -100,7 +156,7 @@ export default function App() {
       <div className="stage-bg" aria-hidden="true">
         {show3D ? (
           <Suspense fallback={null}>
-            <Experience quality={quality} onReady={() => setReady(true)} onDowngrade={downgrade} />
+            <Experience quality={quality} onReady={() => { setReady(true); try { sessionStorage.removeItem('nb-chunk-reload'); } catch { /* ignore */ } }} onDowngrade={downgrade} onContextLost={() => setQuality('none')} />
           </Suspense>
         ) : (
           <div className={`fallback-art s${stage}`}><StageIcon id={STAGES[stage].id} size={220} /></div>
@@ -115,10 +171,11 @@ export default function App() {
           <a href="#stage-machine" className={stage >= 2 && stage <= 3 ? 'is-active' : ''} onClick={(e) => { e.preventDefault(); goToStage(2); }}>Technology</a>
           <a href="#stage-milk" className={stage === 4 ? 'is-active' : ''} onClick={(e) => { e.preventDefault(); goToStage(4); }}>Brew Lab</a>
           <a href="#shop">Shop</a>
+          <a href="#track" onClick={(e) => { e.preventDefault(); openRoute('track'); }}>Track order</a>
         </nav>
         <div className="nav__actions">
-          <button className="icon-btn" onClick={() => notify(cart ? `${cart} item${cart > 1 ? 's' : ''} in your cart` : 'Your cart is empty')} aria-label={`Cart, ${cart} items`}>
-            <Bag />{cart > 0 && <b className="badge">{cart}</b>}
+          <button className="icon-btn" onClick={() => setCartOpen(true)} aria-label={`Open cart, ${count} ${count === 1 ? 'item' : 'items'}`}>
+            <Bag />{count > 0 && <b className="badge" key={count}>{count}</b>}
           </button>
           <a className="btn btn--outline btn--sm" href="#shop">Order now <Arrow /></a>
         </div>
@@ -278,39 +335,29 @@ export default function App() {
           </div>
         </aside>
 
-        {/* SHOP */}
-        <section className="shop" id="shop" aria-labelledby="h-shop">
-          <div className="wrap">
-            <p className="eyebrow reveal">Our coffee</p>
-            <h2 id="h-shop" className="title title--sm reveal">Engineered blends, <em>roasted to order.</em></h2>
-            <div className="products">
-              {PRODUCTS.map((p) => (
-                <article key={p.id} className="product reveal">
-                  <span className="product__tag">{p.tag}</span>
-                  <div className={`bag bag--${p.id}`} aria-hidden="true"><Logo width="40" height="40" /><span>{p.name}</span></div>
-                  <h3>{p.name}</h3>
-                  <p>{p.notes}</p>
-                  <div className="product__row">
-                    <b className="mono">{money(p.price)}</b>
-                    <button className="btn btn--solid btn--sm" onClick={() => addToCart(p.name)} aria-label={`Add ${p.name} to cart`}>Add <Arrow /></button>
-                  </div>
-                </article>
-              ))}
-            </div>
-            <p className="note">Prices are placeholders. Checkout is not connected yet.</p>
-          </div>
-        </section>
+        <Shop onOpen={setProduct} onQuickAdd={(p) => addToCart({ id: p.id, qty: 1 })} />
       </main>
 
       <footer className="footer">
         <div className="wrap footer__inner">
           <a className="brand" href="#top" onClick={(e) => { e.preventDefault(); goToStage(0); }}><Logo /> <span>NEUROBREW<sup>™</sup></span></a>
-          <span>© 2026 NEUROBREW. Coffee, reengineered.</span>
+          <nav className="footer__links" aria-label="Footer">
+            <a href="#shop">Shop</a>
+            <a href="#track" onClick={(e) => { e.preventDefault(); openRoute('track'); }}>Track order</a>
+            <a href="mailto:hello@neurobrew.com">Contact</a>
+          </nav>
+          <span>© 2026 NEUROBREW · Los Angeles, California</span>
           <button className="link" onClick={() => setQuality((q) => (q === 'none' ? detectQuality() || 'low' : 'none'))}>
             {quality === 'none' ? 'Turn on 3D' : 'Lite mode (turn off 3D)'}
           </button>
         </div>
       </footer>
+
+      <ProductModal product={product} onClose={() => setProduct(null)} onAdd={addToCart} />
+      <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} cart={cart} dispatch={dispatch} onCheckout={() => openRoute('checkout')} onShop={toShop} />
+      <Checkout open={route === 'checkout'} onClose={closeRoute} cart={cart} onPlaced={orderDone} />
+      <TrackOrder open={route === 'track' || route === 'confirmation'} stripeReturn={route === 'confirmation' ? stripeReturn : null} onClose={closeRoute} onPaid={orderDone} />
+      {route === 'admin' && <Suspense fallback={null}><Admin open onClose={closeRoute} /></Suspense>}
 
       <div className={`toast ${toast ? 'is-on' : ''}`} role="status" aria-live="polite">{toast}</div>
     </>

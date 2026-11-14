@@ -63,7 +63,7 @@ function HeroBean() {
   const g = useRef(), bean = useRef(), ring = useRef(), dots = useRef();
   const geo = useMemo(beanGeometry, []);
   const mat = useMemo(() => new THREE.MeshPhysicalMaterial({ color: COLORS.raw.clone(), roughness: 0.38, clearcoat: 0.7, clearcoatRoughness: 0.3 }), []);
-  const ringMat = useMemo(() => new THREE.MeshBasicMaterial({ color: new THREE.Color('#ff8a3d').multiplyScalar(5), toneMapped: false, transparent: true }), []);
+  const ringMat = useMemo(() => new THREE.MeshBasicMaterial({ color: new THREE.Color('#ff7a12').multiplyScalar(6.5), toneMapped: false, transparent: true }), []);
   const dotGeo = useMemo(() => {
     const n = 260, arr = new Float32Array(n * 3);
     for (let i = 0; i < n; i++) {
@@ -112,7 +112,7 @@ function Machine({ mats }) {
   const glowMats = useMemo(() => Array.from({ length: 6 }, () => new THREE.MeshBasicMaterial({ color: '#ff7a2e', toneMapped: false })), []);
   const coilMat = useMemo(() => new THREE.MeshBasicMaterial({ color: '#ff5a1a', toneMapped: false }), []);
   const ringMats = useMemo(() => [0, 1, 2].map(() => new THREE.MeshBasicMaterial({ color: '#ff7a2e', toneMapped: false })), []);
-  const hot = useMemo(() => new THREE.Color('#ff7a2e'), []);
+  const hot = useMemo(() => new THREE.Color('#ff6a00'), []);
 
   useFrame((state, dt) => {
     const p = journey.smooth, t = clock(state), b = brewState(p);
@@ -387,16 +387,16 @@ function Scene({ high }) {
   return (
     <>
       <color attach="background" args={['#0a0807']} />
-      <fog attach="fog" args={['#0a0807', 8, 20]} />
+      <fog attach="fog" args={['#090504', 8, 20]} />
       <CameraRig />
       <ambientLight intensity={0.12} />
       <spotLight position={[-5, 9, 6]} angle={0.55} penumbra={0.8} intensity={520} distance={30} color="#ffe2c4" target-position={[0, 4, 0]} />
-      <directionalLight position={[6, 4, -6]} intensity={3.2} color="#ff8a3d" />
+      <directionalLight position={[6, 4, -6]} intensity={4.2} color="#ff6a00" />
       <directionalLight position={[-6, 3, -5]} intensity={1.3} color="#ffb27a" />
       <pointLight position={[2.5, 1.5, 6]} intensity={22} color="#fff0e0" distance={20} decay={2} />
       <Environment resolution={high ? 256 : 64} frames={1}>
         <Lightformer form="rect" intensity={2.2} color="#ffd9b0" position={[-4, 6, 4]} scale={[6, 3, 1]} target={[0, 2, 0]} />
-        <Lightformer form="rect" intensity={3} color="#ff8a3d" position={[6, 3, -3]} scale={[1, 8, 1]} target={[0, 2, 0]} />
+        <Lightformer form="rect" intensity={4} color="#ff6a00" position={[6, 3, -3]} scale={[1, 8, 1]} target={[0, 2, 0]} />
         <Lightformer form="ring" intensity={1.4} color="#ffb070" position={[0, -2, 5]} scale={4} target={[0, 0, 0]} />
         <Lightformer form="rect" intensity={1} color="#ffffff" position={[-6, 2, -4]} scale={[1, 6, 1]} target={[0, 2, 0]} />
       </Environment>
@@ -414,7 +414,7 @@ function Scene({ high }) {
 // Dev-only test hook: lets automated checks render frames on demand.
 if (import.meta.env.DEV && typeof window !== 'undefined') window.__nb = { advance, journey };
 
-export default function Experience({ quality, onReady, onDowngrade }) {
+export default function Experience({ quality, onReady, onDowngrade, onContextLost }) {
   const high = quality === 'high';
   return (
     <Canvas
@@ -422,13 +422,17 @@ export default function Experience({ quality, onReady, onDowngrade }) {
       dpr={high ? [1, 1.75] : [1, 1.25]}
       gl={{ antialias: !high, powerPreference: 'high-performance', toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.05 }}
       camera={{ fov: 35, near: 0.1, far: 60, position: [0.2, 5.6, 7.4] }}
-      onCreated={() => { if (onReady) onReady(); }}
+      onCreated={({ gl }) => {
+        // If the GPU drops the context (low memory, driver reset), fall back to the static Lite art instead of a black screen.
+        gl.domElement.addEventListener('webglcontextlost', (e) => { e.preventDefault(); if (onContextLost) onContextLost(); }, { once: true });
+        if (onReady) onReady();
+      }}
     >
       <PerformanceMonitor onDecline={() => onDowngrade && onDowngrade()} />
       <Scene high={high} />
       {high && (
         <EffectComposer multisampling={4} disableNormalPass>
-          <Bloom mipmapBlur intensity={0.85} luminanceThreshold={0.9} luminanceSmoothing={0.2} />
+          <Bloom mipmapBlur intensity={1.15} luminanceThreshold={0.82} luminanceSmoothing={0.22} />
           <Vignette offset={0.28} darkness={0.7} />
         </EffectComposer>
       )}

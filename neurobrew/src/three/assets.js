@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 
 export const COLORS = {
-  copper: new THREE.Color('#ff7a2e'),
+  copper: new THREE.Color('#ff6a00'),
   raw: new THREE.Color('#a8915c'),
   mid: new THREE.Color('#9a5a28'),
   roasted: new THREE.Color('#3a1d0e'),
@@ -61,9 +61,9 @@ export function makeMaterials(high) {
     darkMetal: new THREE.MeshStandardMaterial({ color: '#141210', metalness: 0.75, roughness: 0.42 }),
     chrome: new THREE.MeshStandardMaterial({ color: '#c9c4bd', metalness: 1, roughness: 0.16 }),
     steel: new THREE.MeshStandardMaterial({ color: '#8b857d', metalness: 1, roughness: 0.32 }),
-    copper: new THREE.MeshStandardMaterial({ color: '#c46a32', metalness: 1, roughness: 0.28 }),
+    copper: new THREE.MeshStandardMaterial({ color: '#d8692a', metalness: 1, roughness: 0.24 }),
     rubber: new THREE.MeshStandardMaterial({ color: '#0c0b0a', metalness: 0, roughness: 0.7 }),
-    glow: new THREE.MeshBasicMaterial({ color: new THREE.Color('#ff7a2e').multiplyScalar(4), toneMapped: false }),
+    glow: new THREE.MeshBasicMaterial({ color: new THREE.Color('#ff6a00').multiplyScalar(5), toneMapped: false }),
     grounds: new THREE.MeshStandardMaterial({ color: '#3a2112', roughness: 0.95, metalness: 0 }),
   };
 }

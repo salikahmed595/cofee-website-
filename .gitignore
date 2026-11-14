@@ -5,3 +5,9 @@ dist/
 Thumbs.db
 .env
 .env.*
+!.env.example
+
+# NEUROBREW order database
+data/
+*.db
+*.db-*
